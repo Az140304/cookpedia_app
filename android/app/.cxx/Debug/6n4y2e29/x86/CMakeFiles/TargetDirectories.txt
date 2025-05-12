@@ -1,0 +1,2 @@
+D:/flutterproject/cookpedia_app/android/app/.cxx/Debug/6n4y2e29/x86/CMakeFiles/edit_cache.dir
+D:/flutterproject/cookpedia_app/android/app/.cxx/Debug/6n4y2e29/x86/CMakeFiles/rebuild_cache.dir
