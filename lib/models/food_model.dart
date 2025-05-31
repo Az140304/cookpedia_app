@@ -61,6 +61,7 @@ class FoodModel {
       strCreativeCommonsConfirmed: json['strCreativeCommonsConfirmed'] ?? '',
       dateModified: json['dateModified'] ?? '',
       ingredients: ingredients,
+
     );
   }
 }

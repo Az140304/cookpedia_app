@@ -9,15 +9,20 @@ class BaseNetwork {
     final response = await http.get(Uri.parse(baseUrl + endpoint));
 
     if(response.statusCode == 200){
+      print('Response body: ${response.body}');
       final data = jsonDecode(response.body);
-      return data[endpoint] ?? [];
+      final meals = data['meals'];
+      return meals ?? [];
     } else {
       throw Exception('Failed to load');
     }
   }
 
-  static Future<Map<String, dynamic>> getDetailData(String endpoint, int id) async{
-    final response = await http.get(Uri.parse(baseUrl + '$endpoint/$id'));
+  static Future<Map<String, dynamic>> getDetailData(String id) async{
+    print(id);
+    final response = await http.get(Uri.parse(baseUrl + 'lookup.php?i=$id'));
+
+    print('API Response Body: ${response.body}');
 
     if(response.statusCode == 200){
       return jsonDecode(response.body);

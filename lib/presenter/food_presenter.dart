@@ -5,6 +5,7 @@ abstract class FoodView {
   void showLoading();
   void hideLoading();
   void showFoodList(List<FoodModel> foodList);
+  void showFoodCategory(List<FoodModel> foodList);
   void showError(String message);
 }
 
@@ -17,10 +18,21 @@ class FoodPresenter {
       final List<dynamic> data = await BaseNetwork.getData(endpoint);
       final foodList = data.map((json)=> FoodModel.fromJson(json)).toList();
       view.showFoodList(foodList);
+      view.showFoodCategory(foodList);
     } catch (e) {
       view.showError(e.toString());
     } finally {
       view.hideLoading();
+    }
+  }
+
+  Future<void> loadFoodCategories() async {
+    try {
+      final List<dynamic> data = await BaseNetwork.getData("list.php?c=list");
+      final categoryList = data.map((json) => FoodModel.fromJson(json)).toList();
+      view.showFoodCategory(categoryList);
+    } catch (e) {
+      view.showError(e.toString());
     }
   }
 }

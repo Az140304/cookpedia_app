@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => Home2Page(username: _usernameController.text),
+          builder: (context) => FoodListScreen(/*username: _usernameController.text*/),
         ),
       );
     } else {
