@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/presenter/food_presenter.dart';
 import 'package:cookpedia_app/models/food_model.dart';
+import 'package:cookpedia_app/models/category_model.dart';
 import 'package:cookpedia_app/pages/food_detail_page.dart';
 
 class FoodListScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class _FoodListScreenState extends State<FoodListScreen> implements FoodView {
   late FoodPresenter _presenter;
   bool _isLoading = false;
   List<FoodModel> _foodList = [];
-  List<FoodModel> _foodCategory = [];
+  List<FoodCategoryModel> _foodCategory = [];
   String? _errorMessage;
   String _currentEndpoint = "search.php?s=";
 
@@ -172,8 +173,7 @@ class _FoodListScreenState extends State<FoodListScreen> implements FoodView {
   }
 
   @override
-  @override
-  void showFoodCategory(List<FoodModel> foodCategories) {
+  void showFoodCategory(List<FoodCategoryModel> foodCategories) {
     setState(() {
       _foodCategory = foodCategories;
     });
