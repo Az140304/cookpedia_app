@@ -4,7 +4,9 @@ import 'package:cookpedia_app/models/notes_model.dart';    // Adjust path if nec
 import 'add_note_page.dart'; // Import the AddNotePage
 
 class ShoppingNotePage extends StatefulWidget {
-  const ShoppingNotePage({super.key, int? currentUserId});
+  final int? currentUserId;
+
+  const ShoppingNotePage({super.key, this.currentUserId});
 
   @override
   State<ShoppingNotePage> createState() => _ShoppingNotePageState();
@@ -12,56 +14,83 @@ class ShoppingNotePage extends StatefulWidget {
 
 class _ShoppingNotePageState extends State<ShoppingNotePage> {
   final dbHelper = DatabaseHelper.instance;
-  List<Note> _allNotes = [];
+  List<Note> _notes = [];
   bool _isLoading = true;
+  String _appBarTitle = "Shopping Notes";
 
   @override
   void initState() {
     super.initState();
+    _updateTitleAndLoadNotes();
+  }
+
+  @override
+  void didUpdateWidget(covariant ShoppingNotePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentUserId != oldWidget.currentUserId) {
+      _updateTitleAndLoadNotes();
+    }
+  }
+
+  void _updateTitleAndLoadNotes() {
+    if (widget.currentUserId != null) {
+      _appBarTitle = "My Shopping Notes";
+    } else {
+      _appBarTitle = "Shopping Notes (No User Selected)";
+    }
     _loadNotes();
   }
 
   Future<void> _loadNotes() async {
-    if (!mounted) return; // Check if the widget is still mounted
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
-    try {
-      final notes = await dbHelper.getAllNotes();
-      if (mounted) { // Check again before updating state
+
+    if (widget.currentUserId == null) {
+      if (mounted) {
         setState(() {
-          _allNotes = notes;
+          _notes = [];
+          _isLoading = false;
+        });
+      }
+      print('No currentUserId provided to ShoppingNotePage. Displaying no user-specific notes.');
+      return;
+    }
+
+    try {
+      final notes = await dbHelper.getNotesForUser(widget.currentUserId!);
+      if (mounted) {
+        setState(() {
+          _notes = notes;
           _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) { // Check again before updating state
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading notes: ${e.toString()}')),
         );
-        print('Error loading all notes: $e');
+        print('Error loading notes for user ${widget.currentUserId}: $e');
       }
     }
   }
 
   void _navigateToAddNotePage() async {
-    // TODO: Replace '1' with the actual current logged-in user's ID.
-    // This ID should ideally come from your SessionManager or app's auth state.
-    // For example, if HomePage holds the loggedInUserId, it could pass it to ShoppingNotePage,
-    // or ShoppingNotePage could fetch it from SessionManager if appropriate for its context.
-    // Since ShoppingNotePage currently shows ALL notes, we'll use a placeholder for now.
-    // If your app structure has a logged-in user context, use that ID.
-    // Example: int currentUserIdFromSession = await SessionManager.getUserId(); (if you implement getUserId)
-    // For now, let's assume a placeholder or that ShoppingNotePage receives it somehow.
-    const int placeholderCurrentUserId = 1; // Replace with actual user ID logic
+    if (widget.currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot add note: No user selected.')),
+      );
+      return;
+    }
 
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddNotePage(currentUserId: placeholderCurrentUserId), // Pass the userId
+        builder: (context) => AddNotePage(currentUserId: widget.currentUserId!),
       ),
     );
 
@@ -70,13 +99,9 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
     }
   }
 
-
-
   Future<void> _deleteNote(int id) async {
     try {
       await dbHelper.deleteNote(id);
-      // No need to call setState here directly for isLoading
-      // _loadAllNotes will handle its own loading state and refresh the list.
       _loadNotes();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,101 +118,103 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("All Shopping Notes"),
+        title: Text(_appBarTitle),
         centerTitle: true,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _allNotes.isEmpty
+          : widget.currentUserId == null
           ? const Center(
         child: Text(
-          "No notes found. Tap '+' to add one!",
+          "No user selected to display notes.",
           style: TextStyle(fontSize: 18),
           textAlign: TextAlign.center,
         ),
       )
-          : RefreshIndicator( // Optional: Add pull-to-refresh
+          : _notes.isEmpty
+          ? Center(
+        child: Text(
+          "No notes found for this user. Tap '+' to add one!",
+          style: const TextStyle(fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+      )
+          : RefreshIndicator(
         onRefresh: _loadNotes,
         child: ListView.builder(
-          itemCount: _allNotes.length,
+          itemCount: _notes.length,
           itemBuilder: (context, index) {
-            final note = _allNotes[index];
+            final note = _notes[index];
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               elevation: 2,
               child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.only(left: 16.0, right: 0.0, top: 8.0, bottom: 8.0), // Adjust padding
                 title: Text(
-                  note.foodName ?? "No Title", // Assuming 'foodName' in your Note model
+                  note.foodName ?? "No Title",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    Text(
-                      note.measure ?? "No content", // Assuming 'content' in your Note model
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Measure: ${note.measure ?? 'N/A'}", // Assuming 'measure' in your Note model
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "User ID: ${note.userId}",
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    if (note.createdAt != null)
-                      Text(
-                        "Created: ${note.createdAt!.substring(0, 10)}",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                subtitle: (note.createdAt != null) // Subtitle will only show created date now
+                    ? Padding(
+                  padding: const EdgeInsets.only(top: 4.0), // Add some space if date is shown
+                  child: Text(
+                    "Created: ${note.createdAt!.substring(0, 10)}",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
+                )
+                    : null, // No subtitle if no date
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min, // Important for Row in trailing
+                  children: <Widget>[
+                    if (note.measure != null && note.measure!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Text(
+                          note.measure!,
+                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                        ),
                       ),
-                  ],
-                ),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red[700]),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Delete Note"),
-                          content: Text(
-                              "Are you sure you want to delete '${note.foodName ?? 'this note'}'?"),
-                          actions: <Widget>[
-                            TextButton(
-                              child: const Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            TextButton(
-                              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                              onPressed: () {
-                                if (note.id != null) {
-                                  _deleteNote(note.id!);
-                                }
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
+                    IconButton(
+                      icon: Icon(Icons.delete_outline, color: Colors.red[700]),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text("Delete Note"),
+                              content: Text(
+                                  "Are you sure you want to delete '${note.foodName ?? 'this note'}'?"),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text("Cancel"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                TextButton(
+                                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                                  onPressed: () {
+                                    if (note.id != null) {
+                                      _deleteNote(note.id!);
+                                    }
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                isThreeLine: true,
                 onTap: () {
                   showDialog(
                     context: context,
@@ -201,9 +228,9 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
                             Text("Item: ${note.foodName ?? 'N/A'}"),
                             const SizedBox(height: 8),
                             Text("Measure: ${note.measure ?? 'N/A'}"),
-                            const SizedBox(height: 8),
-                            Text("User ID: ${note.userId}"),
-                            if (note.createdAt != null) Text("Created: ${note.createdAt}"),
+                            // User ID display removed for brevity, can be added back if needed
+                            // const SizedBox(height: 8),
+                            // Text("User ID: ${note.userId}"),
                           ],
                         ),
                       ),
@@ -221,11 +248,13 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: widget.currentUserId != null
+          ? FloatingActionButton(
         onPressed: _navigateToAddNotePage,
         tooltip: 'Add Note',
         child: const Icon(Icons.add),
-      ),
+      )
+          : null,
     );
   }
 }
