@@ -1,4 +1,4 @@
-# tugas_3_mobile
+# Aplikasi Cookpedia
 
 A new Flutter project.
 
