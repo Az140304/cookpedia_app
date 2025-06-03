@@ -1,7 +1,9 @@
 import 'package:cookpedia_app/pages/home2_page.dart';
 import 'package:cookpedia_app/pages/login_page.dart';
+import 'package:cookpedia_app/utils/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/pages/main_page.dart';
+import 'package:cookpedia_app/pages/location_test_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Wibu App',
+      title: 'Cookpedia',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -31,7 +33,7 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFFF8B1E)),
       ),
       home: const LoginPage(),
     );

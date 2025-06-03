@@ -167,7 +167,7 @@ class _FoodDetailState extends State<FoodDetail> {
                     Text(
                       _detailData!['meals'][0]['strMeal'],
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 30,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

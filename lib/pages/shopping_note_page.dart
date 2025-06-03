@@ -1,7 +1,9 @@
+// lib/pages/shopping_note_page.dart
 import 'package:flutter/material.dart';
-import 'package:cookpedia_app/utils/database_helper.dart'; // Adjust path if necessary
-import 'package:cookpedia_app/models/notes_model.dart';    // Adjust path if necessary
-import 'add_note_page.dart'; // Import the AddNotePage
+import 'package:cookpedia_app/utils/database_helper.dart';
+import 'package:cookpedia_app/models/notes_model.dart'; // Ensure this path is correct
+import 'add_note_page.dart';
+import 'edit_note_page.dart'; // Import the new EditNotePage
 
 class ShoppingNotePage extends StatefulWidget {
   final int? currentUserId;
@@ -99,6 +101,19 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
     }
   }
 
+  void _navigateToEditNotePage(Note noteToEdit) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditNotePage(noteToEdit: noteToEdit),
+      ),
+    );
+
+    if (result == true && mounted) {
+      _loadNotes(); // Refresh the list if a note was updated
+    }
+  }
+
   Future<void> _deleteNote(int id) async {
     try {
       await dbHelper.deleteNote(id);
@@ -122,8 +137,8 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitle),
-        centerTitle: true,
+        title: Text(_appBarTitle, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+        backgroundColor: Color(0xFFFF8B1E),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -153,36 +168,44 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               elevation: 2,
               child: ListTile(
-                contentPadding: const EdgeInsets.only(left: 16.0, right: 0.0, top: 8.0, bottom: 8.0), // Adjust padding
+                contentPadding: const EdgeInsets.only(left: 16.0, right: 0.0, top: 8.0, bottom: 8.0),
                 title: Text(
                   note.foodName ?? "No Title",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
-                ),
-                subtitle: (note.createdAt != null) // Subtitle will only show created date now
+                ),/*
+                subtitle: (note.createdAt != null)
                     ? Padding(
-                  padding: const EdgeInsets.only(top: 4.0), // Add some space if date is shown
+                  padding: const EdgeInsets.only(top: 4.0),
                   child: Text(
                     "Created: ${note.createdAt!.substring(0, 10)}",
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                   ),
                 )
-                    : null, // No subtitle if no date
+                    : null,*/
                 trailing: Row(
-                  mainAxisSize: MainAxisSize.min, // Important for Row in trailing
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     if (note.measure != null && note.measure!.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Added some padding
                         child: Text(
                           note.measure!,
                           style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                         ),
                       ),
-                    IconButton(
+                    IconButton( // Edit Button
+                      icon: Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.primary),
+                      tooltip: 'Edit Note',
+                      onPressed: () {
+                        _navigateToEditNotePage(note);
+                      },
+                    ),
+                    IconButton( // Delete Button
                       icon: Icon(Icons.delete_outline, color: Colors.red[700]),
+                      tooltip: 'Delete Note',
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -215,7 +238,7 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
                     ),
                   ],
                 ),
-                onTap: () {
+                onTap: () { // Keep onTap for quick view if desired
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -228,9 +251,7 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
                             Text("Item: ${note.foodName ?? 'N/A'}"),
                             const SizedBox(height: 8),
                             Text("Measure: ${note.measure ?? 'N/A'}"),
-                            // User ID display removed for brevity, can be added back if needed
-                            // const SizedBox(height: 8),
-                            // Text("User ID: ${note.userId}"),
+                            // Content is not displayed in the list, but can be in detail view
                           ],
                         ),
                       ),

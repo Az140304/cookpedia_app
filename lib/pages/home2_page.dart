@@ -41,9 +41,13 @@ class _FoodListScreenState extends State<FoodListScreen> implements FoodView {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Food List")),
+      appBar: AppBar(
+          title: Text("Food List", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+          backgroundColor: Color(0xFFFF8B1E),
+      ),
       body: Column(
         children: [
+          SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child:

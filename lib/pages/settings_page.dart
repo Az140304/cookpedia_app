@@ -53,7 +53,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
 
-          // Placeholder for other settings
+          /*
           const ListTile(
             leading: Icon(Icons.person_outline),
             title: Text('Account'),
@@ -63,7 +63,7 @@ class SettingsPage extends StatelessWidget {
             leading: Icon(Icons.notifications_none),
             title: Text('Notifications'),
             onTap: null, // TODO: Implement notification settings page or action
-          ),
+          ),*/
           const Divider(),
 
           // Logout Button in the form of a Row within an InkWell (or ListTile)

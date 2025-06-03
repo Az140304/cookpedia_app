@@ -1,9 +1,11 @@
+// lib/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/utils/database_helper.dart';
 import 'package:cookpedia_app/utils/session_manager.dart';
 import 'package:cookpedia_app/models/user_model.dart';
-import 'register_page.dart'; // To navigate to register page
-import 'main_page.dart'; // Assuming MainScreen is defined here or in main.dart and re-exported
+import 'package:cookpedia_app/utils/password_utils.dart'; // Import new password utility
+import 'register_page.dart';
+import 'main_page.dart'; // Or your actual home/main screen
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,81 +15,75 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Key for the form to enable validation
   final _formKey = GlobalKey<FormState>();
-
-  // Controllers for the username and password text fields
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  // Instance of DatabaseHelper for database operations
   final dbHelper = DatabaseHelper.instance;
-
-  // Boolean to manage loading state and disable button during async operations
   bool _isLoading = false;
 
   @override
   void dispose() {
-    // Dispose controllers when the widget is removed from the widget tree
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _loginUser() async {
-    // Validate the form inputs
     if (_formKey.currentState!.validate()) {
-      if (!mounted) return; // Check if widget is still mounted
+      if (!mounted) return;
       setState(() {
         _isLoading = true;
       });
 
       String username = _usernameController.text;
-      String password = _passwordController.text;
+      String plainPassword = _passwordController.text;
 
       User? user = await dbHelper.getUserByUsername(username);
+      if (!mounted) return;
 
-      if (!mounted) return; // Check mounted state after await
-
-      if (user != null && user.password == password) {
-        // WARNING: Plain text password comparison! In a real app, use hashed passwords.
-        if (user.id != null) {
-          await SessionManager.saveLoginSession(user.username, user.id!);
-          if (mounted) { // Check mounted state before navigating
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainScreen()), // Navigate to MainScreen
-            );
-          }
-        } else {
-          // This case should ideally not happen if users are created correctly with an ID
-          if (mounted) { // Check mounted state
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('User data is incomplete (missing ID).')),
-            );
-          }
-        }
-      } else {
-        // Handle invalid username or password
-        if (mounted) { // Check mounted state
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid username or password.')),
-          );
-        }
+      bool passwordMatch = false;
+      if (user != null) {
+        // Verify the plain password against the stored "salt:hash" string
+        passwordMatch = await PasswordUtils.verifyPassword(plainPassword, user.password);
       }
 
-      if (mounted) { // Check mounted state
+      if (user != null && passwordMatch) {
+        if (user.id != null) {
+          await SessionManager.saveLoginSession(user.username, user.id!);
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data is incomplete (missing ID).')),
+          );
+        }
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid username or password.')),
+        );
+      }
+
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
     }
   }
-
+  // ... build method remains the same as your provided version
+  // (Example build method from previous response)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
+      appBar: AppBar(
+          title: const Text(""),
+          centerTitle: true,
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -97,6 +93,11 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                Center(
+                  child: Text("Welcome Back!", style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
+
+                ),
+                SizedBox(height: 12,),
                 TextFormField(
                   controller: _usernameController,
                   decoration: const InputDecoration(
@@ -147,10 +148,12 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegisterPage()),
-                    );
+                    if(!_isLoading){
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterPage()),
+                      );
+                    }
                   },
                   child: const Text('Don\'t have an account? Register'),
                 ),

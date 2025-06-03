@@ -112,9 +112,9 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Settings',
           ),
         ],
+        backgroundColor: Color(0xFFFF8B1E),
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey, // Good to define for fixed type
+        unselectedItemColor: Colors.white, // Good to define for fixed type
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
