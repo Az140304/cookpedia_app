@@ -1,9 +1,9 @@
 import 'package:cookpedia_app/pages/home2_page.dart';
 import 'package:cookpedia_app/pages/login_page.dart';
-import 'package:cookpedia_app/utils/location_service.dart';
+//import 'package:cookpedia_app/utils/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/pages/main_page.dart';
-import 'package:cookpedia_app/pages/location_test_page.dart';
+//import 'package:cookpedia_app/pages/location_test_page.dart';
 
 void main() {
   runApp(const MyApp());

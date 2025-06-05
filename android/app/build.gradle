@@ -5,35 +5,43 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// This 'configurations.all' block is relevant if you were forcing AndroidX Core versions
+// from a previous step to solve AGP compatibility issues.
+// If you didn't add this before for another issue, you might not need it now
+// unless explicit version forcing is required for other reasons.
+// configurations.all {
+//     resolutionStrategy {
+//         force "androidx.core:core:1.13.1"
+//         force "androidx.core:core-ktx:1.13.1"
+//     }
+// }
+
 android {
     namespace = "com.example.tugas_3_mobile"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35 // Using a newer compileSdk
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        // This line is correctly placed and enables desugaring
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "1.8" // Ensured this is a string '1.8'
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.tugas_3_mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35 // Using a newer targetSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
     }
@@ -41,4 +49,57 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// ==> ADD OR MODIFY THE DEPENDENCIES BLOCK LIKE THIS <==
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version" // Or jdk7, ensure kotlin_version is defined
+    // Other existing implementation dependencies like those for androidx might be here.
+    // For example:
+    // implementation 'androidx.core:core-ktx:1.9.0' // If you were using an explicit older version
+    // implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // Add the coreLibraryDesugaring dependency here:
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4' // Or the latest stable version
+
+    // testImplementation 'junit:junit:4.13.2'
+    // androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    // androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+// (1) BUILD SCRIPT BLOCK: Defines repositories and dependencies for Gradle itself (plugins)
+buildscript {
+    // (1a) Define an 'ext' (extra properties) block to store versions
+    ext.kotlin_version = '1.8.20' // Or a newer compatible version like '1.9.0', '1.9.22'
+    // Ensure this version is compatible with your AGP version.
+
+    // (1b) Repositories for Gradle plugins
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    // (1c) Dependencies for Gradle plugins
+    dependencies {
+        // Android Gradle Plugin (AGP) - version should match your project's requirement.
+        // A previous error log indicated your project uses AGP 8.2.1.
+        classpath 'com.android.tools.build:gradle:8.2.1'
+
+        // Kotlin Gradle Plugin - uses the kotlin_version defined above
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+// (2) ALL PROJECTS BLOCK: Defines repositories for all modules (app and plugins)
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// (3) TASK CLEAN: Standard task to clean the build directory
+rootProject.tasks.register('clean', Delete) {
+    delete rootProject.buildDir
 }
