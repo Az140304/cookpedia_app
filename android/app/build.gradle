@@ -5,10 +5,8 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-// This 'configurations.all' block is relevant if you were forcing AndroidX Core versions
-// from a previous step to solve AGP compatibility issues.
-// If you didn't add this before for another issue, you might not need it now
-// unless explicit version forcing is required for other reasons.
+// This 'configurations.all' block can be used for forcing specific AndroidX versions
+// if needed, but ensure it's necessary for your project.
 // configurations.all {
 //     resolutionStrategy {
 //         force "androidx.core:core:1.13.1"
@@ -17,89 +15,74 @@ plugins {
 // }
 
 android {
-    namespace = "com.example.tugas_3_mobile"
-    compileSdk = 35 // Using a newer compileSdk
-    ndkVersion = "27.0.12077973"
+    namespace = "com.example.tugas_3_mobile" // Ensure this matches your package name
+    compileSdk = 35 // Or your desired compileSdk, e.g., flutter.compileSdkVersion
+    ndkVersion = "27.0.12077973" // Or flutter.ndkVersion from gradle.properties
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-        // This line is correctly placed and enables desugaring
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8" // Ensured this is a string '1.8'
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
-        applicationId = "com.example.tugas_3_mobile"
+        applicationId = "com.example.tugas_3_mobile" // Ensure this matches your package name
         minSdk = flutter.minSdkVersion
-        targetSdk = 35 // Using a newer targetSdk
+        targetSdk = 35 // Or your desired targetSdk, e.g., flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            // TODO: Add your signing configuration for release builds.
+            // signingConfig = signingConfigs.release
+            signingConfig = signingConfigs.debug // Using debug for now, ensure you configure release signing
+            // Consider enabling R8/ProGuard for code shrinking and obfuscation
+            // minifyEnabled true
+            // shrinkResources true
+            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    // It's good practice to define signingConfigs if you plan to release the app
+    // signingConfigs {
+    //     debug {
+    //         // Standard debug signing config
+    //     }
+    //     release {
+    //         // storeFile file("<path_to_your_release_keystore>.jks")
+    //         // storePassword System.getenv("KEYSTORE_PASSWORD")
+    //         // keyAlias System.getenv("KEY_ALIAS")
+    //         // keyPassword System.getenv("KEY_PASSWORD")
+    //     }
+    // }
 }
 
 flutter {
     source = "../.."
 }
 
-// ==> ADD OR MODIFY THE DEPENDENCIES BLOCK LIKE THIS <==
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version" // Or jdk7, ensure kotlin_version is defined
-    // Other existing implementation dependencies like those for androidx might be here.
-    // For example:
-    // implementation 'androidx.core:core-ktx:1.9.0' // If you were using an explicit older version
-    // implementation 'androidx.appcompat:appcompat:1.6.1'
+    // Access kotlin_version from the 'ext' block of the rootProject (defined outside buildscript)
+    //implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${rootProject.ext.kotlin_version}"
 
-    // Add the coreLibraryDesugaring dependency here:
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4' // Or the latest stable version
+    // Example of other AndroidX dependencies (uncomment and adjust versions if needed)
+    // implementation 'androidx.core:core-ktx:1.13.1' // Example, check for latest stable
+    // implementation 'androidx.appcompat:appcompat:1.6.1' // Example, check for latest stable
+    // implementation 'com.google.android.material:material:1.12.0' // Example, check for latest stable
 
+    // Core library desugaring dependency
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5' // Or the latest stable version
+
+    // Standard test dependencies (uncomment if you have tests)
     // testImplementation 'junit:junit:4.13.2'
     // androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     // androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-// (1) BUILD SCRIPT BLOCK: Defines repositories and dependencies for Gradle itself (plugins)
-buildscript {
-    // (1a) Define an 'ext' (extra properties) block to store versions
-    ext.kotlin_version = '1.8.20' // Or a newer compatible version like '1.9.0', '1.9.22'
-    // Ensure this version is compatible with your AGP version.
-
-    // (1b) Repositories for Gradle plugins
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    // (1c) Dependencies for Gradle plugins
-    dependencies {
-        // Android Gradle Plugin (AGP) - version should match your project's requirement.
-        // A previous error log indicated your project uses AGP 8.2.1.
-        classpath 'com.android.tools.build:gradle:8.2.1'
-
-        // Kotlin Gradle Plugin - uses the kotlin_version defined above
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-// (2) ALL PROJECTS BLOCK: Defines repositories for all modules (app and plugins)
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-// (3) TASK CLEAN: Standard task to clean the build directory
-rootProject.tasks.register('clean', Delete) {
-    delete rootProject.buildDir
-}
+// Ensure no buildscript {}, allprojects {}, or rootProject.tasks.register('clean', ...) {}
+// blocks are present here, as they belong in the top-level build.gradle file.

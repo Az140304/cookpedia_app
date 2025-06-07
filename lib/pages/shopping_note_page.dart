@@ -1,9 +1,12 @@
 // lib/pages/shopping_note_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/utils/database_helper.dart';
-import 'package:cookpedia_app/models/notes_model.dart'; // Ensure this path is correct
+import 'package:cookpedia_app/models/notes_model.dart';
+import 'package:cookpedia_app/utils/notification_service.dart';
+import 'package:cookpedia_app/utils/reminder_settings_manager.dart';
 import 'add_note_page.dart';
-import 'edit_note_page.dart'; // Import the new EditNotePage
+import 'edit_note_page.dart';
 
 class ShoppingNotePage extends StatefulWidget {
   final int? currentUserId;
@@ -19,117 +22,118 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
   List<Note> _notes = [];
   bool _isLoading = true;
   String _appBarTitle = "Shopping Notes";
+  bool _remindersEnabled = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSettingsAndNotes();
+  }
+
+  void _loadSettingsAndNotes() async {
+    final remindersOn = await ReminderSettingsManager.areRemindersEnabled();
+    if (mounted) {
+      setState(() {
+        _remindersEnabled = remindersOn;
+      });
+    }
     _updateTitleAndLoadNotes();
   }
 
-  @override
-  void didUpdateWidget(covariant ShoppingNotePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.currentUserId != oldWidget.currentUserId) {
-      _updateTitleAndLoadNotes();
-    }
-  }
-
   void _updateTitleAndLoadNotes() {
-    if (widget.currentUserId != null) {
-      _appBarTitle = "My Shopping Notes";
-    } else {
-      _appBarTitle = "Shopping Notes (No User Selected)";
-    }
+    _appBarTitle = widget.currentUserId != null
+        ? "My Shopping Notes"
+        : "Shopping Notes (No User)";
     _loadNotes();
   }
 
   Future<void> _loadNotes() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     if (widget.currentUserId == null) {
-      if (mounted) {
-        setState(() {
-          _notes = [];
-          _isLoading = false;
-        });
+      if (mounted) setState(() => _notes = []);
+    } else {
+      try {
+        final notes = await dbHelper.getNotesForUser(widget.currentUserId!);
+        if (mounted) setState(() => _notes = notes);
+      } catch (e) {
+        // Handle error
       }
-      print('No currentUserId provided to ShoppingNotePage. Displaying no user-specific notes.');
-      return;
     }
+    if (mounted) setState(() => _isLoading = false);
+  }
 
-    try {
-      final notes = await dbHelper.getNotesForUser(widget.currentUserId!);
+  void _onReminderToggle(bool isEnabled) async {
+    setState(() {
+      _remindersEnabled = isEnabled;
+    });
+    await ReminderSettingsManager.setRemindersEnabled(isEnabled);
+
+    if (isEnabled) {
+      // If toggled on, start the repeating reminder.
+      await NotificationService().startRepeatingReminder();
       if (mounted) {
-        setState(() {
-          _notes = notes;
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Reminders enabled.'),
+          backgroundColor: Colors.green,
+        ));
       }
-    } catch (e) {
+    } else {
+      // If toggled off, cancel all reminders.
+      await NotificationService().cancelAllReminders();
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading notes: ${e.toString()}')),
-        );
-        print('Error loading notes for user ${widget.currentUserId}: $e');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Reminders disabled.'),
+          backgroundColor: Colors.orange,
+        ));
+      }
+    }
+  }
+
+  void _deleteNote(int id) async {
+    await dbHelper.deleteNote(id);
+    _loadNotes();
+
+    // Check if reminders need to be stopped.
+    final remainingNotes = await dbHelper.getNotesForUser(widget.currentUserId!);
+    if (remainingNotes.isEmpty) {
+      await NotificationService().cancelAllReminders();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('List empty. Reminders stopped.'),
+          backgroundColor: Colors.blueAccent,
+        ));
       }
     }
   }
 
   void _navigateToAddNotePage() async {
-    if (widget.currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot add note: No user selected.')),
-      );
-      return;
-    }
+    if (widget.currentUserId == null) return;
+    final wasEmpty = _notes.isEmpty;
 
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddNotePage(currentUserId: widget.currentUserId!),
-      ),
+          builder: (context) =>
+              AddNotePage(currentUserId: widget.currentUserId!)),
     );
-
     if (result == true && mounted) {
-      _loadNotes();
+      await _loadNotes();
+      // If the list was empty and now has an item, start reminders.
+      if (wasEmpty && _notes.isNotEmpty) {
+        await NotificationService().startRepeatingReminder();
+      }
     }
   }
 
-  void _navigateToEditNotePage(Note noteToEdit) async {
+  void _navigateToEditNotePage(Note note) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EditNotePage(noteToEdit: noteToEdit),
-      ),
+      MaterialPageRoute(builder: (context) => EditNotePage(noteToEdit: note)),
     );
-
     if (result == true && mounted) {
-      _loadNotes(); // Refresh the list if a note was updated
-    }
-  }
-
-  Future<void> _deleteNote(int id) async {
-    try {
-      await dbHelper.deleteNote(id);
       _loadNotes();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Note deleted successfully!')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting note: ${e.toString()}')),
-        );
-        print('Error deleting note: $e');
-      }
     }
   }
 
@@ -137,143 +141,62 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitle, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
-        backgroundColor: Color(0xFFFF8B1E),
+        title: Text(_appBarTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFFFF8B1E),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : widget.currentUserId == null
-          ? const Center(
-        child: Text(
-          "No user selected to display notes.",
-          style: TextStyle(fontSize: 18),
-          textAlign: TextAlign.center,
-        ),
-      )
-          : _notes.isEmpty
-          ? Center(
-        child: Text(
-          "No notes found for this user. Tap '+' to add one!",
-          style: const TextStyle(fontSize: 18),
-          textAlign: TextAlign.center,
-        ),
-      )
-          : RefreshIndicator(
-        onRefresh: _loadNotes,
-        child: ListView.builder(
-          itemCount: _notes.length,
-          itemBuilder: (context, index) {
-            final note = _notes[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              elevation: 2,
-              child: ListTile(
-                contentPadding: const EdgeInsets.only(left: 16.0, right: 0.0, top: 8.0, bottom: 8.0),
-                title: Text(
-                  note.foodName ?? "No Title",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),/*
-                subtitle: (note.createdAt != null)
-                    ? Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    "Created: ${note.createdAt!.substring(0, 10)}",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                  ),
-                )
-                    : null,*/
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    if (note.measure != null && note.measure!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Added some padding
-                        child: Text(
-                          note.measure!,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-                        ),
+      body: Column(
+        children: [
+          if (widget.currentUserId != null)
+            SwitchListTile(
+              title: const Text("Enable Reminders"),
+              value: _remindersEnabled,
+              onChanged: _onReminderToggle,
+              activeColor: const Color(0xFFFF8B1E),
+            ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _notes.isEmpty
+                ? const Center(child: Text("No notes yet. Tap '+' to add one!"))
+                : RefreshIndicator(
+              onRefresh: _loadNotes,
+              child: ListView.builder(
+                itemCount: _notes.length,
+                itemBuilder: (context, index) {
+                  final note = _notes[index];
+                  return Card(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: ListTile(
+                      title: Text(note.foodName ?? "No Title"),
+                      subtitle: Text(note.measure ?? ""),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () => _navigateToEditNotePage(note),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            onPressed: () => _deleteNote(note.id!),
+                          ),
+                        ],
                       ),
-                    IconButton( // Edit Button
-                      icon: Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.primary),
-                      tooltip: 'Edit Note',
-                      onPressed: () {
-                        _navigateToEditNotePage(note);
-                      },
-                    ),
-                    IconButton( // Delete Button
-                      icon: Icon(Icons.delete_outline, color: Colors.red[700]),
-                      tooltip: 'Delete Note',
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text("Delete Note"),
-                              content: Text(
-                                  "Are you sure you want to delete '${note.foodName ?? 'this note'}'?"),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                                TextButton(
-                                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                                  onPressed: () {
-                                    if (note.id != null) {
-                                      _deleteNote(note.id!);
-                                    }
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                onTap: () { // Keep onTap for quick view if desired
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(note.foodName ?? "Note Detail"),
-                      content: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("Item: ${note.foodName ?? 'N/A'}"),
-                            const SizedBox(height: 8),
-                            Text("Measure: ${note.measure ?? 'N/A'}"),
-                            // Content is not displayed in the list, but can be in detail view
-                          ],
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Close"),
-                        )
-                      ],
                     ),
                   );
                 },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: widget.currentUserId != null
           ? FloatingActionButton(
         onPressed: _navigateToAddNotePage,
         tooltip: 'Add Note',
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFFFF8B1E),
+        child: const Icon(Icons.add, color: Colors.white),
       )
           : null,
     );

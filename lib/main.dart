@@ -1,41 +1,41 @@
-import 'package:cookpedia_app/pages/home2_page.dart';
-import 'package:cookpedia_app/pages/login_page.dart';
-//import 'package:cookpedia_app/utils/location_service.dart';
 import 'package:flutter/material.dart';
-import 'package:cookpedia_app/pages/main_page.dart';
-//import 'package:cookpedia_app/pages/location_test_page.dart';
+import 'package:cookpedia_app/pages/login_page.dart';
+import 'package:cookpedia_app/utils/session_manager.dart';
+// import 'package:tugas_3_mobile/services/location_service.dart'; // Your existing commented import
+// import 'package:tugas_3_mobile/pages/location_test_page.dart'; // Your existing commented import
+import 'package:cookpedia_app/utils/notification_service.dart'; // ADD THIS IMPORT
 
-void main() {
+void main() async {
+  // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize NotificationService
+  await NotificationService().init(); // ADD THIS LINE
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cookpedia',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFFF8B1E)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF8B1E)),
+        useMaterial3: true,
+        fontFamily: 'Poppins', // Assuming you still want this font
       ),
-      home: const LoginPage(),
+      debugShowCheckedModeBanner: false,
+      home: const LoginPage(), // Or your initial route logic
+      // routes: { // If you use named routes
+      //   '/details': (context) => DetailsScreen(), // Example route for notification tap
+      // },
+      // navigatorKey: navigatorKey, // Optional: for navigating from notification tap handler
     );
   }
 }
+
+// Optional: GlobalKey for navigation from notification tap if needed
+// final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
