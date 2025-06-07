@@ -116,12 +116,12 @@ class DatabaseHelper {
 
   // Helper methods for Notes
 
-  Future<int> createNote(Note note) async {
+  Future<int> createNote(NoteModel note) async {
     Database db = await instance.database;
     return await db.insert(tableNotes, note.toMap());
   }
 
-  Future<List<Note>> getNotesForUser(int userId) async {
+  Future<List<NoteModel>> getNotesForUser(int userId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(tableNotes,
         where: '$columnNoteUserId = ?',
@@ -131,11 +131,11 @@ class DatabaseHelper {
     print(maps);
 
     return List.generate(maps.length, (i) {
-      return Note.fromMap(maps[i]);
+      return NoteModel.fromMap(maps[i]);
     });
   }
 
-  Future<int> updateNote(Note note) async {
+  Future<int> updateNote(NoteModel note) async {
     Database db = await instance.database;
     return await db.update(tableNotes, note.toMap(),
         where: '$columnNoteId = ?', whereArgs: [note.id]);
@@ -146,7 +146,7 @@ class DatabaseHelper {
     return await db.delete(tableNotes, where: '$columnNoteId = ?', whereArgs: [id]);
   }
 
-  Future<List<Note>> getAllNotes() async {
+  Future<List<NoteModel>> getAllNotes() async {
     Database db = await instance.database;
     // Query the table for all notes, ordering by creation date or ID
     final List<Map<String, dynamic>> maps = await db.query(
@@ -156,7 +156,7 @@ class DatabaseHelper {
 
     // Convert the List<Map<String, dynamic>> into a List<Note>.
     return List.generate(maps.length, (i) {
-      return Note.fromMap(maps[i]);
+      return NoteModel.fromMap(maps[i]);
     });
   }
 

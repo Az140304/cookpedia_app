@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cookpedia_app/utils/session_manager.dart'; // Import SessionManager
-import 'package:cookpedia_app/pages/home2_page.dart';      // Your FoodListScreen
+import 'package:cookpedia_app/pages/home_page.dart';      // Your FoodListScreen
 import 'package:cookpedia_app/pages/search_page.dart';    // Your SearchPage
 import 'package:cookpedia_app/pages/settings_page.dart';  // Your SettingsPage
 import 'package:cookpedia_app/pages/shopping_note_page.dart'; // Your ShoppingNotePage
@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
   // This allows passing the loaded user data to the respective pages.
   List<Widget> _getWidgetOptions() {
     return <Widget>[
-      const FoodListScreen(), // Home page
+      const HomePage(), // Home page
       const SearchPage(),     // Search page
       ShoppingNotePage(currentUserId: _userId), // Pass userId to ShoppingNotePage
       // Ensure ShoppingNotePage constructor accepts currentUserId

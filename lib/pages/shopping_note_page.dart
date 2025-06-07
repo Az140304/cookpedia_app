@@ -19,7 +19,7 @@ class ShoppingNotePage extends StatefulWidget {
 
 class _ShoppingNotePageState extends State<ShoppingNotePage> {
   final dbHelper = DatabaseHelper.instance;
-  List<Note> _notes = [];
+  List<NoteModel> _notes = [];
   bool _isLoading = true;
   String _appBarTitle = "Shopping Notes";
   bool _remindersEnabled = false;
@@ -127,7 +127,7 @@ class _ShoppingNotePageState extends State<ShoppingNotePage> {
     }
   }
 
-  void _navigateToEditNotePage(Note note) async {
+  void _navigateToEditNotePage(NoteModel note) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => EditNotePage(noteToEdit: note)),

@@ -42,7 +42,7 @@ class _AddNotePageState extends State<AddNotePage> {
       // Use widget.currentUserId directly
       final userId = widget.currentUserId;
 
-      final note = Note(
+      final note = NoteModel(
         userId: userId,
         foodName: _foodNameController.text,
         measure: _measureController.text,

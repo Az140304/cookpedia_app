@@ -1,11 +1,11 @@
-class Note {
+class NoteModel {
   final int? id; // Nullable if auto-incrementing
   final int? userId;
   final String foodName;
   final String measure;
   final String createdAt;
 
-  Note({
+  NoteModel({
     this.id,
     this.userId,
     required this.foodName,
@@ -25,8 +25,8 @@ class Note {
   }
 
   // Create a Note object from a Map object
-  factory Note.fromMap(Map<String, dynamic> map) {
-    return Note(
+  factory NoteModel.fromMap(Map<String, dynamic> map) {
+    return NoteModel(
       id: map['id'] as int?,
       userId: map['user_id'] as int,
       foodName: map['food_name'] as String,

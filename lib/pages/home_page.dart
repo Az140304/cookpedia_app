@@ -5,14 +5,14 @@ import 'package:cookpedia_app/models/category_model.dart';
 import 'package:cookpedia_app/pages/food_detail_page.dart';
 import 'package:cookpedia_app/utils/location_food_service.dart'; // Make sure this path is correct
 
-class FoodListScreen extends StatefulWidget {
-  const FoodListScreen({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<FoodListScreen> createState() => _FoodListScreenState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _FoodListScreenState extends State<FoodListScreen> implements FoodView {
+class _HomePageState extends State<HomePage> implements FoodView {
   // All your existing state variables and methods remain the same
   late FoodPresenter _presenter;
   bool _isLoading = false;
